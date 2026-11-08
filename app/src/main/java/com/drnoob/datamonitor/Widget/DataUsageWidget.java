@@ -6,6 +6,7 @@ import static com.drnoob.datamonitor.core.Values.DATA_RESET_DAILY;
 import static com.drnoob.datamonitor.core.Values.DATA_RESET_DATE;
 import static com.drnoob.datamonitor.core.Values.DATA_RESET_MONTHLY;
 import static com.drnoob.datamonitor.core.Values.DATA_TYPE;
+import static com.drnoob.datamonitor.core.Values.LOCK_SCREEN_REFRESH;
 import static com.drnoob.datamonitor.core.Values.PREFS_NAME;
 import static com.drnoob.datamonitor.core.Values.REMAINING_DATA_INFO;
 import static com.drnoob.datamonitor.core.Values.SESSION_MONTHLY;
@@ -36,6 +37,7 @@ import android.widget.RemoteViews;
 import com.drnoob.datamonitor.Common;
 import com.drnoob.datamonitor.R;
 import com.drnoob.datamonitor.ui.activities.MainActivity;
+import com.drnoob.datamonitor.utils.ScreenMonitorService;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -295,5 +297,21 @@ public class DataUsageWidget extends AppWidgetProvider {
         } catch (Exception e) {
             Log.w(TAG, "Could not register receiver: " + e.getMessage());
         }
+    }
+
+    @Override
+    public void onEnabled(Context context) {
+        super.onEnabled(context);
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        boolean lockScreenRefresh = prefs.getBoolean(LOCK_SCREEN_REFRESH, true);
+        if (lockScreenRefresh) {
+            ScreenMonitorService.start(context);
+        }
+    }
+
+    @Override
+    public void onDisabled(Context context) {
+        super.onDisabled(context);
+        ScreenMonitorService.stop(context);
     }
 }

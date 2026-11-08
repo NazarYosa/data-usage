@@ -56,6 +56,8 @@
     <string name="label_show_remaining_desc">Display remaining quota calculation on the widget</string>
     <string name="label_show_wifi">Show Wi-Fi Usage</string>
     <string name="label_show_wifi_desc">Display Wi-Fi data consumption on the widget</string>
+    <string name="label_lock_screen_refresh">Lock Screen Auto-Refresh</string>
+    <string name="label_lock_screen_refresh_desc">Automatically refresh widget when screen turns on at lock screen (without PIN/fingerprint)</string>
     <string name="label_refresh_interval">Widget Refresh Interval</string>
 
     <string name="btn_save">Save Settings</string>

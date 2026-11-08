@@ -7,6 +7,7 @@ import static com.drnoob.datamonitor.core.Values.DATA_RESET_DATE;
 import static com.drnoob.datamonitor.core.Values.DATA_RESET_MONTHLY;
 import static com.drnoob.datamonitor.core.Values.DATA_RESET_NONE;
 import static com.drnoob.datamonitor.core.Values.DATA_TYPE;
+import static com.drnoob.datamonitor.core.Values.LOCK_SCREEN_REFRESH;
 import static com.drnoob.datamonitor.core.Values.PREFS_NAME;
 import static com.drnoob.datamonitor.core.Values.REMAINING_DATA_INFO;
 import static com.drnoob.datamonitor.core.Values.REQUEST_READ_PHONE_STATE;
@@ -43,6 +44,7 @@ import com.drnoob.datamonitor.Common;
 import com.drnoob.datamonitor.R;
 import com.drnoob.datamonitor.Widget.DataUsageWidget;
 import com.drnoob.datamonitor.core.DeveloperInfo;
+import com.drnoob.datamonitor.utils.ScreenMonitorService;
 
 public class MainActivity extends Activity {
 
@@ -53,7 +55,7 @@ public class MainActivity extends Activity {
     private View layoutResetDate, layoutLimitContainer;
     private EditText etResetDate, etDataLimit;
     private Spinner spDataUnit, spRefreshInterval;
-    private Switch switchShowRemaining, switchShowWifi;
+    private Switch switchShowRemaining, switchShowWifi, switchLockScreenRefresh;
     private LinearLayout cardPermissions;
     private Button btnGrantUsage, btnGrantPhone, btnGrantBattery, btnSave, btnRefreshNow, btnGuide;
     private TextView tvDeveloperCredit;
@@ -99,6 +101,7 @@ public class MainActivity extends Activity {
 
         switchShowRemaining = findViewById(R.id.switch_show_remaining);
         switchShowWifi = findViewById(R.id.switch_show_wifi);
+        switchLockScreenRefresh = findViewById(R.id.switch_lock_screen_refresh);
 
         cardPermissions = findViewById(R.id.card_permissions);
         btnGrantUsage = findViewById(R.id.btn_grant_usage);
@@ -235,6 +238,7 @@ public class MainActivity extends Activity {
 
         switchShowRemaining.setChecked(prefs.getBoolean(REMAINING_DATA_INFO, true));
         switchShowWifi.setChecked(prefs.getBoolean(WIDGET_SHOW_WIFI, true));
+        switchLockScreenRefresh.setChecked(prefs.getBoolean(LOCK_SCREEN_REFRESH, true));
     }
 
     private void saveSettings() {
@@ -274,6 +278,7 @@ public class MainActivity extends Activity {
 
         int dataType = spDataUnit.getSelectedItemPosition() == 1 ? 0 : 1; // 0 = MB, 1 = GB
         int intervalMillis = INTERVAL_VALUES[spRefreshInterval.getSelectedItemPosition()];
+        boolean lockRefresh = switchLockScreenRefresh.isChecked();
 
         prefs.edit()
                 .putString(DATA_RESET, cycle)
@@ -281,8 +286,15 @@ public class MainActivity extends Activity {
                 .putInt(DATA_TYPE, dataType)
                 .putBoolean(REMAINING_DATA_INFO, switchShowRemaining.isChecked())
                 .putBoolean(WIDGET_SHOW_WIFI, switchShowWifi.isChecked())
+                .putBoolean(LOCK_SCREEN_REFRESH, lockRefresh)
                 .putInt(WIDGET_REFRESH_INTERVAL, intervalMillis)
                 .apply();
+
+        if (lockRefresh) {
+            ScreenMonitorService.start(this);
+        } else {
+            ScreenMonitorService.stop(this);
+        }
 
         triggerWidgetUpdate();
 

@@ -17,6 +17,7 @@ public class Values {
     public static final String WIDGET_REFRESH_INTERVAL = "widget_refresh_interval";
     public static final String WIDGET_SHOW_WIFI = "widget_show_wifi_usage";
     public static final String REMAINING_DATA_INFO = "remaining_data_info";
+    public static final String LOCK_SCREEN_REFRESH = "lock_screen_refresh";
 
     public static final int OTHER_NOTIFICATION_ID = 0x012C;
     public static final String OTHER_NOTIFICATION_CHANNEL_ID = "Other.Notification";
