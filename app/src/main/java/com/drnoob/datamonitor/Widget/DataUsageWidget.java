@@ -29,6 +29,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
@@ -44,6 +45,7 @@ import java.util.Locale;
 public class DataUsageWidget extends AppWidgetProvider {
     private static final String TAG = "DataUsageWidget";
     public static final String TYPE_MANUAL_REFRESH = "widget_manual_refresh";
+    public static final String ACTION_AUTO_UPDATE = "com.drnoob.datamonitor.ACTION_AUTO_UPDATE";
 
     private static boolean isReceiverRunning = false;
     private boolean manualRefresh = false;
@@ -202,31 +204,30 @@ public class DataUsageWidget extends AppWidgetProvider {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (intent == null) return;
+        String action = intent.getAction();
 
-        if (intent.getType() != null) {
-            if (intent.getType().equals(TYPE_MANUAL_REFRESH)) {
-                setManualRefresh(true);
-            } else {
-                setManualRefresh(false);
-            }
+        if (intent.getType() != null && intent.getType().equals(TYPE_MANUAL_REFRESH)) {
+            setManualRefresh(true);
         } else {
             setManualRefresh(false);
         }
 
         super.onReceive(context, intent);
 
-        String action = intent.getAction();
-        if (action != null) {
-            if (action.equals(Intent.ACTION_SCREEN_ON)
-                    || action.equals(Intent.ACTION_USER_PRESENT)
-                    || action.equals(Intent.ACTION_USER_UNLOCKED)
-                    || action.equals(Intent.ACTION_MY_PACKAGE_REPLACED)
-                    || action.equals(Intent.ACTION_BOOT_COMPLETED)) {
-                AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-                int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(context, DataUsageWidget.class));
-                if (ids != null && ids.length > 0) {
-                    onUpdate(context, appWidgetManager, ids);
-                }
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        ComponentName cn = new ComponentName(context, DataUsageWidget.class);
+        int[] ids = appWidgetManager.getAppWidgetIds(cn);
+
+        if (ids != null && ids.length > 0) {
+            if (ACTION_AUTO_UPDATE.equals(action)
+                    || AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)
+                    || Intent.ACTION_SCREEN_ON.equals(action)
+                    || Intent.ACTION_USER_PRESENT.equals(action)
+                    || Intent.ACTION_USER_UNLOCKED.equals(action)
+                    || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)
+                    || Intent.ACTION_BOOT_COMPLETED.equals(action)
+                    || "android.intent.action.QUICKBOOT_POWERON".equals(action)) {
+                onUpdate(context, appWidgetManager, ids);
             }
         }
     }
@@ -253,31 +254,50 @@ public class DataUsageWidget extends AppWidgetProvider {
     }
 
     public static void setRepeating(Context context) {
-        Intent intent = new Intent(context, DataUsageWidget.class);
-        intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-        int[] ids = AppWidgetManager.getInstance(context)
-                .getAppWidgetIds(new ComponentName(context, DataUsageWidget.class));
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
-
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return;
 
+        Intent intent = new Intent(context, DataUsageWidget.class);
+        intent.setAction(ACTION_AUTO_UPDATE);
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context,
+                1001,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         int elapsedTime = prefs.getInt(WIDGET_REFRESH_INTERVAL, 60000);
-        long triggerAt = System.currentTimeMillis() + elapsedTime;
+        long triggerAt = SystemClock.elapsedRealtime() + elapsedTime;
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (alarmManager.canScheduleExactAlarms()) {
-                alarmManager.setExact(AlarmManager.RTC, triggerAt, pendingIntent);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        triggerAt,
+                        pendingIntent);
             } else {
-                alarmManager.set(AlarmManager.RTC, triggerAt, pendingIntent);
-                Common.postAlarmPermissionDeniedNotification(context);
+                alarmManager.setExact(
+                        AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        triggerAt,
+                        pendingIntent);
             }
-        } else {
-            alarmManager.setExact(AlarmManager.RTC, triggerAt, pendingIntent);
+        } catch (Throwable t) {
+            Log.w(TAG, "Falling back to setAndAllowWhileIdle: " + t.getMessage());
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setAndAllowWhileIdle(
+                            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                            triggerAt,
+                            pendingIntent);
+                } else {
+                    alarmManager.set(
+                            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                            triggerAt,
+                            pendingIntent);
+                }
+            } catch (Throwable ignored) {}
         }
     }
 
@@ -295,14 +315,24 @@ public class DataUsageWidget extends AppWidgetProvider {
     }
 
     @Override
+    public void onEnabled(Context context) {
+        super.onEnabled(context);
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(context, DataUsageWidget.class));
+        if (ids != null && ids.length > 0) {
+            onUpdate(context, appWidgetManager, ids);
+        }
+    }
+
+    @Override
     public void onDisabled(Context context) {
         super.onDisabled(context);
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager != null) {
             Intent intent = new Intent(context, DataUsageWidget.class);
-            intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+            intent.setAction(ACTION_AUTO_UPDATE);
             PendingIntent pi = PendingIntent.getBroadcast(
-                    context, 0, intent,
+                    context, 1001, intent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             alarmManager.cancel(pi);
         }
