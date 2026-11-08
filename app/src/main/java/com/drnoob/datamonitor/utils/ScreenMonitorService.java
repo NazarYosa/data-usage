@@ -11,26 +11,53 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 
 import com.drnoob.datamonitor.R;
 import com.drnoob.datamonitor.Widget.DataUsageWidget;
+import com.drnoob.datamonitor.core.Values;
 import com.drnoob.datamonitor.ui.activities.MainActivity;
 
 /**
- * Ultra-lightweight background service to listen for SCREEN_ON and USER_PRESENT events.
- * Keeps dynamic receiver active so widgets refresh immediately when screen turns on
- * at the lock screen without requiring PIN or fingerprint unlock.
+ * Continuous Background Service that drives live widget updates.
+ * - Runs a reliable timer loop for periodic refresh.
+ * - Listens for SCREEN_ON and USER_PRESENT for instantaneous updates.
+ * - Ensures widget is always 100% synchronized with kernel data stats.
  */
 public class ScreenMonitorService extends Service {
     private static final String TAG = "ScreenMonitorService";
     private static final String CHANNEL_ID = "screen_monitor_channel";
     private static final int NOTIFICATION_ID = 1002;
 
+    private static boolean isRunning = false;
+
     private BroadcastReceiver screenReceiver;
+    private final Handler updateHandler = new Handler(Looper.getMainLooper());
+
+    private final Runnable updateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                refreshAllWidgets();
+            } catch (Exception e) {
+                Log.e(TAG, "Error in periodic update: " + e.getMessage());
+            }
+
+            SharedPreferences prefs = getSharedPreferences(Values.PREFS_NAME, Context.MODE_PRIVATE);
+            int interval = prefs.getInt(Values.WIDGET_REFRESH_INTERVAL, 60000);
+            updateHandler.postDelayed(this, interval);
+        }
+    };
+
+    public static boolean isServiceRunning() {
+        return isRunning;
+    }
 
     public static void start(Context context) {
         try {
@@ -57,6 +84,7 @@ public class ScreenMonitorService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        isRunning = true;
         createNotificationChannel();
         Notification notification = buildNotification();
         try {
@@ -71,7 +99,14 @@ public class ScreenMonitorService extends Service {
                 startForeground(NOTIFICATION_ID, notification);
             } catch (Throwable ignored) {}
         }
+
         registerScreenReceiver();
+        startPeriodicLoop();
+    }
+
+    private void startPeriodicLoop() {
+        updateHandler.removeCallbacks(updateRunnable);
+        updateHandler.post(updateRunnable);
     }
 
     private void createNotificationChannel() {
@@ -81,7 +116,7 @@ public class ScreenMonitorService extends Service {
                     "Widget Lock Screen Monitor",
                     NotificationManager.IMPORTANCE_LOW);
             channel.setShowBadge(false);
-            channel.setDescription("Keeps widget refreshed when screen turns on");
+            channel.setDescription("Menjaga widget data tetap ter-update secara real-time");
             NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (manager != null) {
                 manager.createNotificationChannel(channel);
@@ -104,7 +139,7 @@ public class ScreenMonitorService extends Service {
         }
 
         builder.setContentTitle("Data Usage")
-                .setContentText("Widget auto-refresh aktif di layar kunci")
+                .setContentText("Pemantauan kuota & widget aktif di latar belakang")
                 .setSmallIcon(R.drawable.ic_widget)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true);
@@ -121,17 +156,7 @@ public class ScreenMonitorService extends Service {
                 if (Intent.ACTION_SCREEN_ON.equals(action)
                         || Intent.ACTION_USER_PRESENT.equals(action)
                         || "android.intent.action.USER_UNLOCKED".equals(action)) {
-                    try {
-                        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-                        int[] ids = appWidgetManager.getAppWidgetIds(
-                                new ComponentName(context, DataUsageWidget.class));
-                        if (ids != null && ids.length > 0) {
-                            DataUsageWidget widget = new DataUsageWidget();
-                            widget.onUpdate(context, appWidgetManager, ids);
-                        }
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error refreshing widget from service: " + e.getMessage());
-                    }
+                    refreshAllWidgets();
                 }
             }
         };
@@ -139,7 +164,7 @@ public class ScreenMonitorService extends Service {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_SCREEN_ON);
         filter.addAction(Intent.ACTION_USER_PRESENT);
-        filter.setPriority(100);
+        filter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY);
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -152,14 +177,33 @@ public class ScreenMonitorService extends Service {
         }
     }
 
+    public void refreshAllWidgets() {
+        try {
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+            ComponentName cn = new ComponentName(this, DataUsageWidget.class);
+            int[] ids = appWidgetManager.getAppWidgetIds(cn);
+            if (ids != null && ids.length > 0) {
+                for (int id : ids) {
+                    DataUsageWidget.updateAppWidget(this, appWidgetManager, id);
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error refreshing widgets: " + e.getMessage());
+        }
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        refreshAllWidgets();
+        startPeriodicLoop();
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        isRunning = false;
+        updateHandler.removeCallbacks(updateRunnable);
         if (screenReceiver != null) {
             try {
                 unregisterReceiver(screenReceiver);
@@ -172,4 +216,3 @@ public class ScreenMonitorService extends Service {
         return null;
     }
 }
-

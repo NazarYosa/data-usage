@@ -55,8 +55,8 @@
     <string name="label_show_remaining_desc">Tampilkan perhitungan sisa kuota pada widget</string>
     <string name="label_show_wifi">Tampilkan Pemakaian Wi-Fi</string>
     <string name="label_show_wifi_desc">Tampilkan konsumsi data Wi-Fi pada widget</string>
-    <string name="label_lock_screen_refresh">Refresh di Layar Kunci</string>
-    <string name="label_lock_screen_refresh_desc">Otomatis refresh widget saat layar menyala di lock screen (tanpa perlu buka PIN/sidik jari)</string>
+    <string name="label_lock_screen_refresh">Layanan Latar Belakang (Selalu Aktif)</string>
+    <string name="label_lock_screen_refresh_desc">Jalankan layanan di latar belakang agar widget selalu update per menit dan saat layar menyala</string>
     <string name="label_refresh_interval">Interval Pembaruan Otomatis</string>
 
     <string name="btn_save">Simpan Pengaturan</string>

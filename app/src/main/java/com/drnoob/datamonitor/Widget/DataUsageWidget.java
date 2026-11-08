@@ -57,7 +57,7 @@ public class DataUsageWidget extends AppWidgetProvider {
         return new String[]{formatted.substring(0, space), formatted.substring(space + 1)};
     }
 
-    public void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
+    public static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
         Long[] mobile = new Long[]{0L, 0L, 0L};
         Long[] wifi = new Long[]{0L, 0L, 0L};
         String mobileData = "0.0 MB";
@@ -193,6 +193,12 @@ public class DataUsageWidget extends AppWidgetProvider {
                 || Intent.ACTION_BOOT_COMPLETED.equals(action)) {
             if (ids != null && ids.length > 0) {
                 onUpdate(context, appWidgetManager, ids);
+            }
+            if (ACTION_MANUAL_REFRESH.equals(action)) {
+                SharedPreferences sp = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                if (sp.getBoolean(LOCK_SCREEN_REFRESH, true)) {
+                    ScreenMonitorService.start(context);
+                }
             }
             return;
         }
