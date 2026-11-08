@@ -189,6 +189,7 @@ public class DataUsageWidget extends AppWidgetProvider {
                 || Intent.ACTION_USER_PRESENT.equals(action)
                 || Intent.ACTION_SCREEN_ON.equals(action)
                 || Intent.ACTION_USER_UNLOCKED.equals(action)
+                || Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)
                 || Intent.ACTION_BOOT_COMPLETED.equals(action)) {
             if (ids != null && ids.length > 0) {
                 onUpdate(context, appWidgetManager, ids);
