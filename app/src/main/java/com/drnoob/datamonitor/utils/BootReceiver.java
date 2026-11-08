@@ -5,11 +5,9 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.drnoob.datamonitor.Widget.DataUsageWidget;
-import com.drnoob.datamonitor.core.Values;
 
 public class BootReceiver extends BroadcastReceiver {
     private static final String TAG = "BootReceiver";
@@ -33,12 +31,6 @@ public class BootReceiver extends BroadcastReceiver {
                     widget.onUpdate(context, appWidgetManager, ids);
                 }
                 DataUsageWidget.setRepeating(context);
-
-                SharedPreferences prefs = context.getSharedPreferences(Values.PREFS_NAME, Context.MODE_PRIVATE);
-                boolean lockScreenRefresh = prefs.getBoolean(Values.LOCK_SCREEN_REFRESH, true);
-                if (lockScreenRefresh) {
-                    ScreenMonitorService.start(context);
-                }
             } catch (Exception e) {
                 Log.e(TAG, "Error updating widget on boot/replace: " + e.getMessage());
             }

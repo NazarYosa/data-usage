@@ -7,7 +7,6 @@ import static com.drnoob.datamonitor.core.Values.DATA_RESET_DATE;
 import static com.drnoob.datamonitor.core.Values.DATA_RESET_MONTHLY;
 import static com.drnoob.datamonitor.core.Values.DATA_RESET_NONE;
 import static com.drnoob.datamonitor.core.Values.DATA_TYPE;
-import static com.drnoob.datamonitor.core.Values.LOCK_SCREEN_REFRESH;
 import static com.drnoob.datamonitor.core.Values.PREFS_NAME;
 import static com.drnoob.datamonitor.core.Values.REMAINING_DATA_INFO;
 import static com.drnoob.datamonitor.core.Values.REQUEST_READ_PHONE_STATE;
@@ -16,6 +15,7 @@ import static com.drnoob.datamonitor.core.Values.WIDGET_SHOW_WIFI;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
@@ -44,7 +44,6 @@ import com.drnoob.datamonitor.Common;
 import com.drnoob.datamonitor.R;
 import com.drnoob.datamonitor.Widget.DataUsageWidget;
 import com.drnoob.datamonitor.core.DeveloperInfo;
-import com.drnoob.datamonitor.utils.ScreenMonitorService;
 
 public class MainActivity extends Activity {
 
@@ -55,9 +54,9 @@ public class MainActivity extends Activity {
     private View layoutResetDate, layoutLimitContainer;
     private EditText etResetDate, etDataLimit;
     private Spinner spDataUnit, spRefreshInterval;
-    private Switch switchShowRemaining, switchShowWifi, switchLockScreenRefresh;
+    private Switch switchShowRemaining, switchShowWifi;
     private LinearLayout cardPermissions;
-    private Button btnGrantUsage, btnGrantPhone, btnGrantBattery, btnSave, btnRefreshNow, btnGuide;
+    private Button btnGrantUsage, btnGrantPhone, btnGrantBattery, btnGrantAlarm, btnSave, btnRefreshNow, btnGuide;
     private TextView tvDeveloperCredit;
 
     private final int[] INTERVAL_VALUES = new int[]{60000, 300000, 900000, 1800000, 3600000};
@@ -83,12 +82,6 @@ public class MainActivity extends Activity {
         super.onResume();
         checkPermissions();
         triggerWidgetUpdate();
-
-        SharedPreferences sp = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        boolean lockRefresh = sp.getBoolean(LOCK_SCREEN_REFRESH, true);
-        if (lockRefresh) {
-            ScreenMonitorService.start(this);
-        }
     }
 
     private void initViews() {
@@ -107,12 +100,12 @@ public class MainActivity extends Activity {
 
         switchShowRemaining = findViewById(R.id.switch_show_remaining);
         switchShowWifi = findViewById(R.id.switch_show_wifi);
-        switchLockScreenRefresh = findViewById(R.id.switch_lock_screen_refresh);
 
         cardPermissions = findViewById(R.id.card_permissions);
         btnGrantUsage = findViewById(R.id.btn_grant_usage);
         btnGrantPhone = findViewById(R.id.btn_grant_phone);
         btnGrantBattery = findViewById(R.id.btn_grant_battery);
+        btnGrantAlarm = findViewById(R.id.btn_grant_alarm);
 
         btnSave = findViewById(R.id.btn_save);
         btnRefreshNow = findViewById(R.id.btn_refresh_now);
@@ -171,6 +164,25 @@ public class MainActivity extends Activity {
         btnGrantBattery.setOnClickListener(v -> {
             requestBatteryOptimizationExemption();
         });
+
+        if (btnGrantAlarm != null) {
+            btnGrantAlarm.setOnClickListener(v -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    try {
+                        Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                        intent.setData(Uri.parse("package:" + getPackageName()));
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        try {
+                            Intent fallback = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                            startActivity(fallback);
+                        } catch (Exception ex) {
+                            Toast.makeText(this, "Cannot open Exact Alarm settings", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }
+            });
+        }
 
         btnSave.setOnClickListener(v -> saveSettings());
 
@@ -244,7 +256,6 @@ public class MainActivity extends Activity {
 
         switchShowRemaining.setChecked(prefs.getBoolean(REMAINING_DATA_INFO, true));
         switchShowWifi.setChecked(prefs.getBoolean(WIDGET_SHOW_WIFI, true));
-        switchLockScreenRefresh.setChecked(prefs.getBoolean(LOCK_SCREEN_REFRESH, true));
     }
 
     private void saveSettings() {
@@ -284,7 +295,6 @@ public class MainActivity extends Activity {
 
         int dataType = spDataUnit.getSelectedItemPosition() == 1 ? 0 : 1; // 0 = MB, 1 = GB
         int intervalMillis = INTERVAL_VALUES[spRefreshInterval.getSelectedItemPosition()];
-        boolean lockRefresh = switchLockScreenRefresh.isChecked();
 
         prefs.edit()
                 .putString(DATA_RESET, cycle)
@@ -292,15 +302,8 @@ public class MainActivity extends Activity {
                 .putInt(DATA_TYPE, dataType)
                 .putBoolean(REMAINING_DATA_INFO, switchShowRemaining.isChecked())
                 .putBoolean(WIDGET_SHOW_WIFI, switchShowWifi.isChecked())
-                .putBoolean(LOCK_SCREEN_REFRESH, lockRefresh)
                 .putInt(WIDGET_REFRESH_INTERVAL, intervalMillis)
                 .apply();
-
-        if (lockRefresh) {
-            ScreenMonitorService.start(this);
-        } else {
-            ScreenMonitorService.stop(this);
-        }
 
         triggerWidgetUpdate();
 
@@ -312,7 +315,8 @@ public class MainActivity extends Activity {
         int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(this, DataUsageWidget.class));
         if (ids != null && ids.length > 0) {
             Intent updateIntent = new Intent(this, DataUsageWidget.class);
-            updateIntent.setAction(DataUsageWidget.ACTION_AUTO_UPDATE);
+            updateIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+            updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
             sendBroadcast(updateIntent);
         }
         DataUsageWidget.setRepeating(this);
@@ -338,13 +342,24 @@ public class MainActivity extends Activity {
             }
         }
 
-        if (usageGranted && phoneGranted && batteryExempt) {
+        boolean alarmGranted = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (alarmManager != null) {
+                alarmGranted = alarmManager.canScheduleExactAlarms();
+            }
+        }
+
+        if (usageGranted && phoneGranted && batteryExempt && alarmGranted) {
             cardPermissions.setVisibility(View.GONE);
         } else {
             cardPermissions.setVisibility(View.VISIBLE);
             btnGrantUsage.setVisibility(usageGranted ? View.GONE : View.VISIBLE);
             btnGrantPhone.setVisibility(phoneGranted ? View.GONE : View.VISIBLE);
             btnGrantBattery.setVisibility(batteryExempt ? View.GONE : View.VISIBLE);
+            if (btnGrantAlarm != null) {
+                btnGrantAlarm.setVisibility(alarmGranted ? View.GONE : View.VISIBLE);
+            }
         }
     }
 

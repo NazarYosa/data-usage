@@ -87,15 +87,15 @@ public class NetworkStatsHelper {
     }
 
     public static String formatBytes(long bytes) {
-        if (bytes <= 0) return "0.0 MB";
+        if (bytes <= 0) return "0.00 MB";
         float mb = bytes / (1024f * 1024f);
         if (mb >= 1024f) {
-            return String.format(Locale.US, "%.1f GB", mb / 1024f);
-        } else if (mb < 0.1f) {
+            return String.format(Locale.US, "%.2f GB", mb / 1024f);
+        } else if (mb < 0.01f) {
             float kb = bytes / 1024f;
-            return String.format(Locale.US, "%.0f KB", kb);
+            return String.format(Locale.US, "%.1f KB", kb);
         } else {
-            return String.format(Locale.US, "%.1f MB", mb);
+            return String.format(Locale.US, "%.2f MB", mb);
         }
     }
 
@@ -115,7 +115,7 @@ public class NetworkStatsHelper {
         cal.set(Calendar.MILLISECOND, 0);
 
         long resetTimeMillis;
-        long endTimeMillis = System.currentTimeMillis();
+        long endTimeMillis;
 
         if (session == SESSION_MONTHLY) {
             SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -127,9 +127,16 @@ public class NetworkStatsHelper {
             int maxDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
             cal.set(Calendar.DAY_OF_MONTH, Math.min(monthlyResetDate, maxDay));
             resetTimeMillis = cal.getTimeInMillis();
+
+            Calendar endCal = (Calendar) cal.clone();
+            endCal.add(Calendar.MONTH, 1);
+            endTimeMillis = endCal.getTimeInMillis();
         } else {
-            // SESSION_TODAY
+            // SESSION_TODAY: Start of today 00:00:00 to end of today / tomorrow 00:00:00
             resetTimeMillis = cal.getTimeInMillis();
+            Calendar endCal = (Calendar) cal.clone();
+            endCal.add(Calendar.DAY_OF_MONTH, 1);
+            endTimeMillis = endCal.getTimeInMillis();
         }
 
         return new Long[]{resetTimeMillis, endTimeMillis};

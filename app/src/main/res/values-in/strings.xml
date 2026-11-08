@@ -35,6 +35,7 @@
     <string name="permission_battery_title">Pengoptimalan Baterai</string>
     <string name="permission_battery_desc">Izinkan berjalan tanpa batasan baterai agar widget selalu ter-update tepat waktu di background.</string>
     <string name="permission_battery_btn">Matikan Pembatasan Baterai</string>
+    <string name="permission_alarm_btn">Beri Izin Alarm Tepat Waktu</string>
     <string name="permission_granted">✓ Semua izin &amp; pengoptimalan aktif</string>
 
     <!-- Settings Screen -->

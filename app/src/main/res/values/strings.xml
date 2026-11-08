@@ -36,6 +36,7 @@
     <string name="permission_battery_title">Battery Optimization</string>
     <string name="permission_battery_desc">Allow running in background without restriction so the widget always stays updated.</string>
     <string name="permission_battery_btn">Disable Battery Optimization</string>
+    <string name="permission_alarm_btn">Grant Exact Alarm Permission</string>
     <string name="permission_granted">✓ All permissions granted</string>
 
     <!-- Settings Screen -->
