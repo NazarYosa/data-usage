@@ -193,7 +193,10 @@ public class DataUsageWidget extends AppWidgetProvider {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent != null && ACTION_MANUAL_REFRESH.equals(intent.getAction())) {
+        if (intent == null) return;
+        String action = intent.getAction();
+
+        if (ACTION_MANUAL_REFRESH.equals(action)) {
             setManualRefresh(true);
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
             int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(context, DataUsageWidget.class));
@@ -206,7 +209,10 @@ public class DataUsageWidget extends AppWidgetProvider {
         setManualRefresh(false);
         super.onReceive(context, intent);
 
-        if (intent != null && Intent.ACTION_SCREEN_ON.equals(intent.getAction())) {
+        if (Intent.ACTION_USER_PRESENT.equals(action)
+                || Intent.ACTION_SCREEN_ON.equals(action)
+                || Intent.ACTION_USER_UNLOCKED.equals(action)
+                || Intent.ACTION_BOOT_COMPLETED.equals(action)) {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
             int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(context, DataUsageWidget.class));
             if (ids != null && ids.length > 0) {
@@ -254,14 +260,18 @@ public class DataUsageWidget extends AppWidgetProvider {
         long triggerAtMillis = System.currentTimeMillis() + elapsedTime;
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (alarmManager.canScheduleExactAlarms()) {
-                    alarmManager.setExact(AlarmManager.RTC, triggerAtMillis, pendingIntent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (alarmManager.canScheduleExactAlarms()) {
+                        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+                    } else {
+                        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+                    }
                 } else {
-                    alarmManager.set(AlarmManager.RTC, triggerAtMillis, pendingIntent);
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
                 }
             } else {
-                alarmManager.setExact(AlarmManager.RTC, triggerAtMillis, pendingIntent);
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
             }
         } catch (Exception e) {
             Log.w(TAG, "Could not schedule alarm: " + e.getMessage());
@@ -270,7 +280,9 @@ public class DataUsageWidget extends AppWidgetProvider {
 
     private void startReceiver(Context context) {
         try {
-            IntentFilter intentFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+            IntentFilter intentFilter = new IntentFilter();
+            intentFilter.addAction(Intent.ACTION_SCREEN_ON);
+            intentFilter.addAction(Intent.ACTION_USER_PRESENT);
             intentFilter.setPriority(100);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 context.getApplicationContext().registerReceiver(
