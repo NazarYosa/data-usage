@@ -14,3 +14,7 @@ local.properties
 /DataMonitor/
 /DataMonitor-release-2.4.0/
 
+# Ignore compiled APKs
+*.apk
+release/
+
