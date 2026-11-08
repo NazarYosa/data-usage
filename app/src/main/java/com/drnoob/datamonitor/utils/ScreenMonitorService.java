@@ -40,8 +40,8 @@ public class ScreenMonitorService extends Service {
             } else {
                 context.startService(intent);
             }
-        } catch (Exception e) {
-            Log.e(TAG, "Error starting ScreenMonitorService: " + e.getMessage());
+        } catch (Throwable t) {
+            Log.w(TAG, "Cannot start ScreenMonitorService right now: " + t.getMessage());
         }
     }
 
@@ -49,8 +49,8 @@ public class ScreenMonitorService extends Service {
         try {
             Intent intent = new Intent(context, ScreenMonitorService.class);
             context.stopService(intent);
-        } catch (Exception e) {
-            Log.e(TAG, "Error stopping ScreenMonitorService: " + e.getMessage());
+        } catch (Throwable t) {
+            Log.w(TAG, "Error stopping ScreenMonitorService: " + t.getMessage());
         }
     }
 
@@ -65,8 +65,11 @@ public class ScreenMonitorService extends Service {
             } else {
                 startForeground(NOTIFICATION_ID, notification);
             }
-        } catch (Exception e) {
-            Log.w(TAG, "Could not startForeground: " + e.getMessage());
+        } catch (Throwable t) {
+            Log.w(TAG, "Could not startForeground with dataSync: " + t.getMessage());
+            try {
+                startForeground(NOTIFICATION_ID, notification);
+            } catch (Throwable ignored) {}
         }
         registerScreenReceiver();
     }

@@ -83,6 +83,12 @@ public class MainActivity extends Activity {
         super.onResume();
         checkPermissions();
         triggerWidgetUpdate();
+
+        SharedPreferences sp = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        boolean lockRefresh = sp.getBoolean(LOCK_SCREEN_REFRESH, true);
+        if (lockRefresh) {
+            ScreenMonitorService.start(this);
+        }
     }
 
     private void initViews() {
@@ -306,10 +312,10 @@ public class MainActivity extends Activity {
         int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(this, DataUsageWidget.class));
         if (ids != null && ids.length > 0) {
             Intent updateIntent = new Intent(this, DataUsageWidget.class);
-            updateIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-            updateIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+            updateIntent.setAction(DataUsageWidget.ACTION_AUTO_UPDATE);
             sendBroadcast(updateIntent);
         }
+        DataUsageWidget.setRepeating(this);
     }
 
     private void showWidgetGuide() {

@@ -46,17 +46,9 @@ import java.util.Locale;
 public class DataUsageWidget extends AppWidgetProvider {
     private static final String TAG = "DataUsageWidget";
     public static final String ACTION_MANUAL_REFRESH = "com.drnoob.datamonitor.ACTION_MANUAL_REFRESH";
+    public static final String ACTION_AUTO_UPDATE = "com.drnoob.datamonitor.ACTION_AUTO_UPDATE";
 
     private static boolean isReceiverRunning = false;
-    private boolean manualRefresh = false;
-
-    public boolean isManualRefresh() {
-        return manualRefresh;
-    }
-
-    public void setManualRefresh(boolean manualRefresh) {
-        this.manualRefresh = manualRefresh;
-    }
 
     public static String[] splitValueAndUnit(String formatted) {
         if (formatted == null || formatted.isEmpty()) return new String[]{"0.0", "MB"};
@@ -117,11 +109,9 @@ public class DataUsageWidget extends AppWidgetProvider {
             views.setTextViewText(R.id.widget_wifi_unit, wifiParts[1]);
         }
 
-        if (isManualRefresh()) {
-            views.setViewVisibility(R.id.widget_update, View.INVISIBLE);
-            views.setViewVisibility(R.id.widget_update_progress, View.VISIBLE);
-            appWidgetManager.updateAppWidget(appWidgetId, views);
-        }
+        // Always ensure refresh button is visible
+        views.setViewVisibility(R.id.widget_update, View.VISIBLE);
+        views.setViewVisibility(R.id.widget_update_progress, View.GONE);
 
         boolean showRemaining = prefs.getBoolean(REMAINING_DATA_INFO, true);
         boolean showWifiUsage = prefs.getBoolean(WIDGET_SHOW_WIFI, true);
@@ -182,15 +172,7 @@ public class DataUsageWidget extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.layout_data, appPendingIntent);
         views.setOnClickPendingIntent(R.id.layout_wifi, appPendingIntent);
 
-        if (isManualRefresh()) {
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                views.setViewVisibility(R.id.widget_update, View.VISIBLE);
-                views.setViewVisibility(R.id.widget_update_progress, View.GONE);
-                appWidgetManager.updateAppWidget(appWidgetId, views);
-            }, 750);
-        } else {
-            appWidgetManager.updateAppWidget(appWidgetId, views);
-        }
+        appWidgetManager.updateAppWidget(appWidgetId, views);
     }
 
     @Override
@@ -198,29 +180,23 @@ public class DataUsageWidget extends AppWidgetProvider {
         if (intent == null) return;
         String action = intent.getAction();
 
-        if (ACTION_MANUAL_REFRESH.equals(action)) {
-            setManualRefresh(true);
-            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-            int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(context, DataUsageWidget.class));
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(context, DataUsageWidget.class));
+
+        if (ACTION_MANUAL_REFRESH.equals(action)
+                || ACTION_AUTO_UPDATE.equals(action)
+                || AppWidgetManager.ACTION_APPWIDGET_UPDATE.equals(action)
+                || Intent.ACTION_USER_PRESENT.equals(action)
+                || Intent.ACTION_SCREEN_ON.equals(action)
+                || Intent.ACTION_USER_UNLOCKED.equals(action)
+                || Intent.ACTION_BOOT_COMPLETED.equals(action)) {
             if (ids != null && ids.length > 0) {
                 onUpdate(context, appWidgetManager, ids);
             }
             return;
         }
 
-        setManualRefresh(false);
         super.onReceive(context, intent);
-
-        if (Intent.ACTION_USER_PRESENT.equals(action)
-                || Intent.ACTION_SCREEN_ON.equals(action)
-                || Intent.ACTION_USER_UNLOCKED.equals(action)
-                || Intent.ACTION_BOOT_COMPLETED.equals(action)) {
-            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-            int[] ids = appWidgetManager.getAppWidgetIds(new ComponentName(context, DataUsageWidget.class));
-            if (ids != null && ids.length > 0) {
-                onUpdate(context, appWidgetManager, ids);
-            }
-        }
     }
 
     @Override
@@ -241,19 +217,15 @@ public class DataUsageWidget extends AppWidgetProvider {
         setRepeating(context);
     }
 
-    private static void setRepeating(Context context) {
+    public static void setRepeating(Context context) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarmManager == null) return;
 
         Intent intent = new Intent(context, DataUsageWidget.class);
-        intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-        int[] ids = AppWidgetManager.getInstance(context)
-                .getAppWidgetIds(new ComponentName(context, DataUsageWidget.class));
-        if (ids == null || ids.length == 0) return;
-        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids);
+        intent.setAction(ACTION_AUTO_UPDATE);
 
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context, 0, intent,
+                context, 1001, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         int elapsedTime = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -276,7 +248,11 @@ public class DataUsageWidget extends AppWidgetProvider {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
             }
         } catch (Exception e) {
-            Log.w(TAG, "Could not schedule alarm: " + e.getMessage());
+            try {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
+            } catch (Exception ex) {
+                Log.w(TAG, "Could not schedule alarm: " + ex.getMessage());
+            }
         }
     }
 
