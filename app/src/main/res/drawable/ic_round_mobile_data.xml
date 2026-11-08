@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="36dp"
+    android:height="36dp"
+    android:viewportWidth="36"
+    android:viewportHeight="36">
+    <!-- Circle background -->
+    <path
+        android:fillColor="#E6F4EA"
+        android:pathData="M 18,0 A 18,18 0 1,0 18,36 A 18,18 0 1,0 18,0 Z" />
+    <!-- 4 Cellular signal bars with rounded tops -->
+    <!-- Bar 1 (shortest) -->
+    <path
+        android:fillColor="#1E8E3E"
+        android:pathData="M 11,21 h 2.2 c 0.55,0 1,0.45 1,1 v 3 c 0,0.55 -0.45,1 -1,1 h -2.2 c -0.55,0 -1,-0.45 -1,-1 v -3 c 0,-0.55 0.45,-1 1,-1 Z" />
+    <!-- Bar 2 -->
+    <path
+        android:fillColor="#1E8E3E"
+        android:pathData="M 15.4,17 h 2.2 c 0.55,0 1,0.45 1,1 v 7 c 0,0.55 -0.45,1 -1,1 h -2.2 c -0.55,0 -1,-0.45 -1,-1 v -7 c 0,-0.55 0.45,-1 1,-1 Z" />
+    <!-- Bar 3 -->
+    <path
+        android:fillColor="#1E8E3E"
+        android:pathData="M 19.8,13 h 2.2 c 0.55,0 1,0.45 1,1 v 11 c 0,0.55 -0.45,1 -1,1 h -2.2 c -0.55,0 -1,-0.45 -1,-1 v -11 c 0,-0.55 0.45,-1 1,-1 Z" />
+    <!-- Bar 4 (tallest) -->
+    <path
+        android:fillColor="#1E8E3E"
+        android:pathData="M 24.2,9 h 2.2 c 0.55,0 1,0.45 1,1 v 15 c 0,0.55 -0.45,1 -1,1 h -2.2 c -0.55,0 -1,-0.45 -1,-1 v -15 c 0,-0.55 0.45,-1 1,-1 Z" />
+</vector>

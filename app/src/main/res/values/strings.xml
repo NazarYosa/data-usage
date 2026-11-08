@@ -1,0 +1,67 @@
+<resources>
+    <string name="app_name">Data Usage</string>
+    <string name="developer_name" translatable="false">nazaryosa</string>
+    <string name="developer_credit">Developed by nazaryosa</string>
+    <string name="app_tagline">Ultra Lightweight • 0MB Background RAM</string>
+    <string name="reset_time" translatable="false">%1$d/%2$d/%3$d %4$d:%5$d:00</string>
+    <string name="title_data_usage">Data Usage</string>
+    <string name="app_data_usage_placeholder">0.0 MB</string>
+    <string name="data_remaining_placeholder">0.0 GB remaining</string>
+    <string name="label_mobile_data">Mobile Data</string>
+    <string name="label_wifi">Wi-Fi</string>
+    <string name="label_data_remaining">%1$s remaining</string>
+    <string name="label_data_remaining_used_excess">%1$s extra used</string>
+
+    <!-- Widget setup guide -->
+    <string name="setup_widget">Set up the widget</string>
+    <string name="setup_widget_title">Widget</string>
+    <string name="title_widget_setup">Set up widget</string>
+    <string name="widget_setup_step_1">1. Touch and hold an empty space on a Home screen.</string>
+    <string name="widget_setup_step_2">2. Tap \"Widgets\".</string>
+    <string name="widget_setup_step_3">3. Drag and drop the Data Usage widget to your Home screen.</string>
+    <string name="setup_widget_refresh_interval">Widget refresh interval</string>
+    <string name="label_widget_refresh_interval_change">Widget will refresh every %1$s</string>
+    <string name="label_widget_refreshed">Widget refreshed</string>
+
+    <!-- Permissions -->
+    <string name="error_alarm_permission_denied">Permission needed</string>
+    <string name="error_alarm_permission_denied_summary">Tap to allow setting exact alarms for widget updates</string>
+    <string name="permission_title">System Permissions</string>
+    <string name="permission_usage_title">Usage Access Permission</string>
+    <string name="permission_usage_desc">Allow access to usage data so the widget can calculate data consumption.</string>
+    <string name="permission_usage_btn">Grant Usage Access</string>
+    <string name="permission_phone_title">Phone State Permission</string>
+    <string name="permission_phone_desc">Required to accurately read mobile network data usage.</string>
+    <string name="permission_phone_btn">Grant Phone Permission</string>
+    <string name="permission_battery_title">Battery Optimization</string>
+    <string name="permission_battery_desc">Allow running in background without restriction so the widget always stays updated.</string>
+    <string name="permission_battery_btn">Disable Battery Optimization</string>
+    <string name="permission_granted">✓ All permissions granted</string>
+
+    <!-- Settings Screen -->
+    <string name="title_settings">Data Usage Settings</string>
+    <string name="subtitle_settings">Configure data limit and widget display</string>
+    <string name="title_data_plan">Data Plan &amp; Limit</string>
+    <string name="label_plan_cycle">Reset Cycle</string>
+    <string name="plan_daily">Daily (Resets midnight)</string>
+    <string name="plan_monthly">Monthly (Resets on specific date)</string>
+    <string name="plan_none">No Limit (Track usage only)</string>
+    <string name="label_reset_date">Reset Day of Month (1 - 31)</string>
+    <string name="label_data_limit">Data Limit</string>
+    <string name="unit_gb">GB</string>
+    <string name="unit_mb">MB</string>
+
+    <string name="title_widget_display">Widget Display Options</string>
+    <string name="label_show_remaining">Show Remaining Data</string>
+    <string name="label_show_remaining_desc">Display remaining quota calculation on the widget</string>
+    <string name="label_show_wifi">Show Wi-Fi Usage</string>
+    <string name="label_show_wifi_desc">Display Wi-Fi data consumption on the widget</string>
+    <string name="label_refresh_interval">Widget Refresh Interval</string>
+
+    <string name="btn_save">Save Settings</string>
+    <string name="btn_refresh_now">Refresh Widget Now</string>
+    <string name="btn_guide">How to Add Widget</string>
+    <string name="msg_saved">Settings saved and widget updated!</string>
+    <string name="msg_invalid_limit">Please enter a valid data limit number</string>
+    <string name="msg_invalid_date">Please enter a valid day of the month (1-31)</string>
+</resources>

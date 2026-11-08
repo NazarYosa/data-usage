@@ -1,0 +1,66 @@
+<resources>
+    <string name="app_name">Data Usage</string>
+    <string name="developer_name" translatable="false">nazaryosa</string>
+    <string name="developer_credit">Dikembangkan oleh nazaryosa</string>
+    <string name="app_tagline">Sangat Ringan • 0MB RAM Background</string>
+    <string name="title_data_usage">Data Usage</string>
+    <string name="app_data_usage_placeholder">0.0 MB</string>
+    <string name="data_remaining_placeholder">Sisa 0.0 GB</string>
+    <string name="label_mobile_data">Mobile Data</string>
+    <string name="label_wifi">Wi-Fi</string>
+    <string name="label_data_remaining">Sisa %1$s</string>
+    <string name="label_data_remaining_used_excess">Kelebihan %1$s</string>
+
+    <!-- Widget setup guide -->
+    <string name="setup_widget">Pasang Widget</string>
+    <string name="setup_widget_title">Widget</string>
+    <string name="title_widget_setup">Cara Pasang Widget</string>
+    <string name="widget_setup_step_1">1. Sentuh dan tahan area kosong di layar utama (Home screen).</string>
+    <string name="widget_setup_step_2">2. Ketuk menu \"Widget\".</string>
+    <string name="widget_setup_step_3">3. Tarik dan letakkan widget Data Usage ke layar utama Anda.</string>
+    <string name="setup_widget_refresh_interval">Interval pembaruan widget</string>
+    <string name="label_widget_refresh_interval_change">Widget akan diperbarui setiap %1$s</string>
+    <string name="label_widget_refreshed">Widget berhasil diperbarui</string>
+
+    <!-- Permissions -->
+    <string name="error_alarm_permission_denied">Izin dibutuhkan</string>
+    <string name="error_alarm_permission_denied_summary">Ketuk untuk mengizinkan alarm update widget tepat waktu</string>
+    <string name="permission_title">Izin &amp; Pengoptimalan Sistem</string>
+    <string name="permission_usage_title">Akses Penggunaan (Usage Access)</string>
+    <string name="permission_usage_desc">Dibutuhkan agar widget dapat menghitung konsumsi data seluler &amp; Wi-Fi secara real-time.</string>
+    <string name="permission_usage_btn">Berikan Akses Penggunaan</string>
+    <string name="permission_phone_title">Izin Status Telepon</string>
+    <string name="permission_phone_desc">Dibutuhkan untuk membaca identitas jaringan data seluler dengan akurat.</string>
+    <string name="permission_phone_btn">Berikan Izin Telepon</string>
+    <string name="permission_battery_title">Pengoptimalan Baterai</string>
+    <string name="permission_battery_desc">Izinkan berjalan tanpa batasan baterai agar widget selalu ter-update tepat waktu di background.</string>
+    <string name="permission_battery_btn">Matikan Pembatasan Baterai</string>
+    <string name="permission_granted">✓ Semua izin &amp; pengoptimalan aktif</string>
+
+    <!-- Settings Screen -->
+    <string name="title_settings">Pengaturan Data Usage</string>
+    <string name="subtitle_settings">Atur batas kuota dan opsi tampilan widget</string>
+    <string name="title_data_plan">Paket Data &amp; Batas Kuota</string>
+    <string name="label_plan_cycle">Siklus Reset Kuota</string>
+    <string name="plan_daily">Harian (Reset setiap tengah malam)</string>
+    <string name="plan_monthly">Bulanan (Reset pada tanggal tertentu)</string>
+    <string name="plan_none">Tanpa Batas (Hanya catat pemakaian)</string>
+    <string name="label_reset_date">Tanggal Reset Bulanan (1 - 31)</string>
+    <string name="label_data_limit">Batas Kuota</string>
+    <string name="unit_gb">GB</string>
+    <string name="unit_mb">MB</string>
+
+    <string name="title_widget_display">Opsi Tampilan Widget</string>
+    <string name="label_show_remaining">Tampilkan Sisa Kuota</string>
+    <string name="label_show_remaining_desc">Tampilkan perhitungan sisa kuota pada widget</string>
+    <string name="label_show_wifi">Tampilkan Pemakaian Wi-Fi</string>
+    <string name="label_show_wifi_desc">Tampilkan konsumsi data Wi-Fi pada widget</string>
+    <string name="label_refresh_interval">Interval Pembaruan Otomatis</string>
+
+    <string name="btn_save">Simpan Pengaturan</string>
+    <string name="btn_refresh_now">Perbarui Widget Sekarang</string>
+    <string name="btn_guide">Panduan Pasang Widget</string>
+    <string name="msg_saved">Pengaturan berhasil disimpan dan widget diperbarui!</string>
+    <string name="msg_invalid_limit">Silakan masukkan angka batas kuota yang valid</string>
+    <string name="msg_invalid_date">Silakan masukkan tanggal reset yang valid (1-31)</string>
+</resources>
